@@ -3,13 +3,13 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card, peso } from '@/components/ui';
 import { brand } from '@/constants/theme';
-import { BRANCHES, useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth';
 import { usePos } from '@/context/pos';
 
 /** Draft analytics: computed live from orders placed in this session. Real data comes from Supabase views. */
 export default function AnalyticsScreen() {
   const { orders } = usePos();
-  const { branch, user } = useAuth();
+  const { branch, branches, user } = useAuth();
   const [today] = useState(() => new Date());
 
   const paid = orders.filter((o) => o.status === 'paid');
@@ -58,7 +58,7 @@ export default function AnalyticsScreen() {
       {user?.role === 'owner' && (
         <Card>
           <Text style={styles.cardTitle}>All branches · today</Text>
-          {BRANCHES.map((b) => {
+          {branches.map((b) => {
             const bo = paid.filter(
               (o) => o.branchId === b.id && o.createdAt.toDateString() === today.toDateString(),
             );

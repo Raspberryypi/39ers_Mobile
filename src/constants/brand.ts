@@ -1,52 +1,56 @@
 /**
- * 39ers Aklan — brand theme
- * Base colors are sampled directly from the logo:
- *   Espresso brown  #3A1401  (logo background)
- *   White           #FFFFFF  (logo lettering and ring)
- * Everything else is derived from those two, plus one caramel accent
- * (proposed, not from the logo) so primary actions stand out on dark brown.
+ * 39ers Aklan brand colors.
+ *
+ * From the logo: espresso brown #3A1401 and white.
+ * Chosen for the app: a cool "milk" background, matcha green for action buttons
+ * (it reads as go / pay on a POS), and an iced-blue vs. fries-orange pair that marks
+ * which drinks go to the bar and which food goes to the kitchen.
  */
 
 export const colors = {
-  // Brand (from logo)
+  // Brand (from the logo)
   brand: '#3A1401',
   white: '#FFFFFF',
 
-  // Brown scale (derived from brand)
-  brown900: '#2A0E01',
+  // Espresso scale
+  brown900: '#240C01',
   brown800: '#3A1401', // brand
-  brown700: '#55290F',
-  brown600: '#74421F',
-  brown500: '#94603A',
-  brown300: '#C9A98C',
-  brown100: '#F1E6DC',
+  brown700: '#56301A',
+  brown600: '#74492F',
+  brown500: '#94694D',
+  brown300: '#C4AB98',
+  brown100: '#EDE4DD',
 
   // Surfaces
-  background: '#FBF7F2', // warm cream
+  background: '#F4F2EF',
   surface: '#FFFFFF',
-  surfaceAlt: '#F5EDE4',
-  border: '#E6D8CA',
+  surfaceAlt: '#ECE8E4',
+  border: '#E3DDD7',
 
-  // Accent (proposed): caramel, used for primary CTA (Charge, Add to cart)
-  accent: '#D08A3C',
-  accentPressed: '#B87329',
+  // Action color: matcha
+  accent: '#A6D45E',
+  accentPressed: '#8FC042',
+  accentText: '#3F6B14',
+  accentSoft: '#E9F4D3',
   onAccent: '#2A0E01',
 
   // Text
   textPrimary: '#2A0E01',
-  textSecondary: '#6B5444',
-  textMuted: '#9A8576',
+  textSecondary: '#6E5B50',
+  textMuted: '#9C8C82',
   textOnBrand: '#FFFFFF',
 
   // Status
   success: '#2E7D4F',
-  warning: '#C98A00',
-  danger: '#B3261E',
+  warning: '#B7791F',
+  danger: '#C0392B',
   info: '#2F6A8F',
 
-  // Station tags used on tickets and the POS grid
-  stationBar: '#6F4E37', // drinks
-  stationKitchen: '#C2571A', // food
+  // Stations: drinks (bar) vs food (kitchen)
+  stationBar: '#4F86B5',
+  stationKitchen: '#E58A2E',
+  barSoft: '#E1EDF8',
+  kitchenSoft: '#FCEBD3',
 } as const;
 
 export type ColorToken = keyof typeof colors;

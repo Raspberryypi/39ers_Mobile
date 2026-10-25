@@ -4,6 +4,7 @@ export type Permission =
   | 'pos.sell'
   | 'orders.void'
   | 'inventory.manage'
+  | 'menu.manage'
   | 'analytics.view'
   | 'costs.view'
   | 'users.manage'
@@ -17,6 +18,7 @@ const MATRIX: Record<Permission, readonly Role[]> = {
   'pos.sell': ['owner', 'admin', 'staff'],
   'orders.void': ['owner', 'admin'],
   'inventory.manage': ['owner', 'admin'],
+  'menu.manage': ['owner', 'admin'],
   'analytics.view': ['owner', 'admin'],
   'costs.view': ['owner', 'admin'],
   'users.manage': ['owner'],

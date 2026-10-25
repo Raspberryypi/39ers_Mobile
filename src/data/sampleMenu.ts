@@ -27,7 +27,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  category: Category;
+  category: string;
   station: Station;
   groups?: ModifierGroup[];
 }

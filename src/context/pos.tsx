@@ -59,6 +59,8 @@ interface PosValue {
   voidOrder: (id: string) => void;
   settings: PrintSettings;
   updateSettings: (patch: Partial<PrintSettings>) => void;
+  /** This branch today: paid orders, sales, and the next queue number to hand out. */
+  today: { count: number; sales: number; nextQueueNo: string };
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -195,8 +197,20 @@ export function PosProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const today = useMemo(() => {
+    const now = new Date();
+    const mine = orders.filter((o) => o.branchId === branch?.id && isSameDay(o.createdAt, now));
+    const paid = mine.filter((o) => o.status === 'paid');
+    return {
+      count: paid.length,
+      sales: round2(paid.reduce((sum, o) => sum + o.total, 0)),
+      nextQueueNo: pad(mine.length + 1, 3),
+    };
+  }, [orders, branch?.id]);
+
   const value = useMemo(
     () => ({
+      today,
       cart,
       cartCount,
       cartSubtotal,
@@ -211,6 +225,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
       updateSettings,
     }),
     [
+      today,
       cart,
       cartCount,
       cartSubtotal,

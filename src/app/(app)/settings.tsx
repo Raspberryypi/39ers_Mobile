@@ -1,10 +1,9 @@
-import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PaperPreview } from '@/components/PaperPreview';
 import { Button, Card, Chip } from '@/components/ui';
 import { brand } from '@/constants/theme';
-import { BRANCHES, useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth';
 import { usePos } from '@/context/pos';
 import { ROLE_LABEL } from '@/lib/rbac';
 import { buildTestPage, columnsFor, type PaperWidth, type TicketMode } from '@/printing/ticketBuilder';
@@ -16,13 +15,12 @@ const MODES: { value: TicketMode; label: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { user, branch, signOut, setBranch, can } = useAuth();
+  const { user, branch, branches, signOut, setBranch } = useAuth();
   const { settings, updateSettings, clearCart } = usePos();
 
-  function logout() {
+  async function logout() {
     clearCart();
-    signOut();
-    router.replace('/login');
+    await signOut(); // the sign-in screen appears automatically
   }
 
   return (
@@ -33,11 +31,11 @@ export default function SettingsScreen() {
           {user?.name} · {user ? ROLE_LABEL[user.role] : ''}
         </Text>
         <Text style={styles.line}>{branch?.name}</Text>
-        {can('branches.switch') && (
+        {branches.length > 1 && (
           <>
-            <Text style={styles.label}>Switch branch (owner)</Text>
+            <Text style={styles.label}>Switch branch</Text>
             <View style={styles.chips}>
-              {BRANCHES.map((b) => (
+              {branches.map((b) => (
                 <Chip key={b.id} label={b.name} selected={b.id === branch?.id} onPress={() => setBranch(b)} />
               ))}
             </View>

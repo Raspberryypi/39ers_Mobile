@@ -1,82 +1,47 @@
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
-import { brand } from '@/constants/theme';
+import { AppTabBar } from '@/components/nav/AppTabBar';
+import { BREAKPOINT, brand } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
-import { ROLE_LABEL } from '@/lib/rbac';
 
-function TabIcon({ emoji }: { emoji: string }) {
-  return <Text style={styles.icon}>{emoji}</Text>;
-}
-
-/** Tabs a user can see depend on their role (staff: POS + Orders + Settings only). */
+/**
+ * The tab bar itself is drawn by AppTabBar (side rail on tablets / browsers, bottom bar on phones).
+ * Which tabs exist depends on the signed-in role.
+ */
 export default function AppLayout() {
-  const { user, branch, can } = useAuth();
+  const { can } = useAuth();
+  const { width } = useWindowDimensions();
+  const wide = width >= BREAKPOINT;
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Tabs
+        tabBar={(props) => <AppTabBar {...props} />}
         screenOptions={{
-          headerStyle: { backgroundColor: brand.brand },
-          headerTintColor: brand.white,
-          headerTitleStyle: { fontWeight: '800' },
-          headerRight: () => (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{user ? ROLE_LABEL[user.role] : ''}</Text>
-            </View>
-          ),
-          tabBarActiveTintColor: brand.brown800,
-          tabBarInactiveTintColor: brand.textMuted,
-          tabBarLabelStyle: { fontWeight: '700', fontSize: 12 },
-          tabBarStyle: { backgroundColor: brand.surface, borderTopColor: brand.border },
+          headerShown: false,
+          tabBarPosition: wide ? 'left' : 'bottom',
           sceneStyle: { backgroundColor: brand.background },
         }}>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'POS',
-            headerTitle: branch?.name ?? '39ers',
-            tabBarIcon: () => <TabIcon emoji="☕" />,
-          }}
-        />
-        <Tabs.Screen
-          name="orders"
-          options={{ title: 'Orders', tabBarIcon: () => <TabIcon emoji="🧾" /> }}
-        />
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="orders" />
+
+        <Tabs.Protected guard={can('menu.manage')}>
+          <Tabs.Screen name="menu" />
+        </Tabs.Protected>
 
         <Tabs.Protected guard={can('inventory.manage')}>
-          <Tabs.Screen
-            name="inventory"
-            options={{ title: 'Inventory', tabBarIcon: () => <TabIcon emoji="📦" /> }}
-          />
+          <Tabs.Screen name="inventory" />
         </Tabs.Protected>
 
         <Tabs.Protected guard={can('analytics.view')}>
-          <Tabs.Screen
-            name="analytics"
-            options={{ title: 'Analytics', tabBarIcon: () => <TabIcon emoji="📊" /> }}
-          />
+          <Tabs.Screen name="analytics" />
         </Tabs.Protected>
 
-        <Tabs.Screen
-          name="settings"
-          options={{ title: 'Settings', tabBarIcon: () => <TabIcon emoji="⚙️" /> }}
-        />
+        <Tabs.Screen name="settings" />
       </Tabs>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  icon: { fontSize: 20 },
-  badge: {
-    backgroundColor: brand.accent,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginRight: 14,
-  },
-  badgeText: { color: brand.onAccent, fontWeight: '800', fontSize: 12 },
-});

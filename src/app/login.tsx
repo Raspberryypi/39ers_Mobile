@@ -1,96 +1,173 @@
-import { router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, Card, Chip, Logo } from '@/components/ui';
-import { brand } from '@/constants/theme';
-import { BRANCHES, DEMO_USERS, useAuth, type Branch, type User } from '@/context/auth';
-import { ROLE_LABEL, type Role } from '@/lib/rbac';
-
-const ROLE_BLURB: Record<Role, string> = {
-  owner: 'All branches, analytics, inventory and users',
-  admin: 'Branch menu, inventory and reports',
-  staff: 'POS and orders only',
-};
+import { Button, Card, Logo, TextField } from '@/components/ui';
+import { Radius, brand, displayText } from '@/constants/theme';
+import { useAuth } from '@/context/auth';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
-  const [branch, setBranch] = useState<Branch>(BRANCHES[0]);
-  const [user, setUser] = useState<User>(DEMO_USERS[2]);
+  const { user, signIn, configured, accountError } = useAuth();
+  const { width } = useWindowDimensions();
+  const split = width >= 900; // tablet / desktop: brand panel beside the form
 
-  function enter() {
-    signIn(user, branch);
-    router.replace('/');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (user) return <Redirect href="/" />;
+
+  async function submit() {
+    if (!email.trim() || !password) {
+      setError('Enter your email and password.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const message = await signIn(email, password);
+    setBusy(false);
+    if (message) setError(message);
+  }
+
+  const form = (
+    <View style={styles.form}>
+      <Text style={[displayText(34, 'extrabold'), styles.heading]}>Welcome back</Text>
+      <Text style={styles.sub}>Sign in with your staff account to start taking orders.</Text>
+
+      {!configured && (
+        <Card style={styles.warn}>
+          <Text style={styles.warnTitle}>Not connected to the database yet</Text>
+          <Text style={styles.warnText}>
+            Paste your Supabase publishable key into .env.local in the 39ers_mobile folder, then restart with
+            npx expo start -c.
+          </Text>
+        </Card>
+      )}
+
+      <TextField
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoComplete="email"
+        placeholder="you@example.com"
+        style={styles.gap}
+      />
+      <TextField
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        secure
+        autoComplete="password"
+        placeholder="Your password"
+        onSubmitEditing={submit}
+        style={styles.gap}
+      />
+
+      {error ?? accountError ? <Text style={styles.error}>{error ?? accountError}</Text> : null}
+
+      <Button
+        title={busy ? 'Signing in…' : 'Sign in'}
+        variant="accent"
+        size="lg"
+        disabled={busy || !configured}
+        onPress={submit}
+        style={styles.signIn}
+      />
+      <Text style={styles.help}>Forgot your password? Ask the owner to reset it.</Text>
+    </View>
+  );
+
+  if (split) {
+    return (
+      <View style={styles.splitRoot}>
+        <StatusBar style="light" />
+        <View style={styles.brandPanel}>
+          <Logo size={176} />
+          <Text style={[displayText(46, 'extrabold'), styles.heroTitle]}>Milktea, coffee{'\n'}and snacks.</Text>
+          <Text style={styles.heroSub}>One place for orders, menu, and stock across every 39ers branch.</Text>
+          <View style={styles.emojiRow}>
+            {['🧋', '☕', '🍟'].map((e) => (
+              <View key={e} style={styles.emojiBubble}>
+                <Text style={styles.emoji}>{e}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <ScrollView style={styles.formPanel} contentContainerStyle={styles.formPanelContent} keyboardShouldPersistTaps="handled">
+          {form}
+        </ScrollView>
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Logo size={140} />
-        <Text style={styles.title}>39ers Aklan POS</Text>
-        <Text style={styles.sub}>
-          Demo sign-in. Pick a branch and a role to preview what each role can see.
-        </Text>
-
-        <Card style={styles.card}>
-          <Text style={styles.label}>Branch</Text>
-          <View style={styles.chips}>
-            {BRANCHES.map((b) => (
-              <Chip key={b.id} label={b.name} selected={b.id === branch.id} onPress={() => setBranch(b)} />
-            ))}
-          </View>
-
-          <Text style={[styles.label, styles.gap]}>Role</Text>
-          {DEMO_USERS.map((u) => {
-            const selected = u.id === user.id;
-            return (
-              <Pressable
-                key={u.id}
-                onPress={() => setUser(u)}
-                style={[styles.role, selected && styles.roleSelected]}>
-                <Text style={[styles.roleName, selected && styles.roleNameSelected]}>
-                  {ROLE_LABEL[u.role]}
-                </Text>
-                <Text style={[styles.roleBlurb, selected && styles.roleBlurbSelected]}>
-                  {ROLE_BLURB[u.role]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </Card>
-
-        <Button title="Sign in" variant="accent" onPress={enter} style={styles.signIn} />
-        <Text style={styles.note}>Real accounts and PINs come with the Supabase connection.</Text>
+    <View style={styles.phoneRoot}>
+      <StatusBar style="light" />
+      <SafeAreaView edges={['top']} style={styles.phoneTop}>
+        <Logo size={104} />
+        <Text style={[displayText(26, 'extrabold'), styles.phoneTitle]}>39ers Aklan POS</Text>
+      </SafeAreaView>
+      <ScrollView
+        style={styles.sheet}
+        contentContainerStyle={styles.sheetContent}
+        keyboardShouldPersistTaps="handled">
+        {form}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: brand.background },
-  content: { alignItems: 'center', padding: 24, gap: 12 },
-  title: { fontSize: 28, fontWeight: '800', color: brand.brown800, marginTop: 8 },
-  sub: { fontSize: 15, color: brand.textSecondary, textAlign: 'center', maxWidth: 420 },
-  card: { width: '100%', maxWidth: 480, marginTop: 8 },
-  label: { fontSize: 14, fontWeight: '700', color: brand.textSecondary, marginBottom: 8 },
-  gap: { marginTop: 18 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  role: {
-    borderWidth: 1.5,
-    borderColor: brand.border,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    backgroundColor: brand.surface,
+  // tablet / desktop
+  splitRoot: { flex: 1, flexDirection: 'row', backgroundColor: brand.surface },
+  brandPanel: {
+    flex: 1,
+    backgroundColor: brand.brown800,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    padding: 64,
+    gap: 20,
   },
-  roleSelected: { backgroundColor: brand.brown800, borderColor: brand.brown800 },
-  roleName: { fontSize: 17, fontWeight: '800', color: brand.textPrimary },
-  roleNameSelected: { color: brand.white },
-  roleBlurb: { fontSize: 14, color: brand.textSecondary, marginTop: 2 },
-  roleBlurbSelected: { color: brand.brown100 },
-  signIn: { width: '100%', maxWidth: 480, marginTop: 4 },
-  note: { fontSize: 13, color: brand.textMuted, textAlign: 'center' },
+  heroTitle: { color: brand.white, marginTop: 12 },
+  heroSub: { fontSize: 18, color: brand.brown300, maxWidth: 420, lineHeight: 26 },
+  emojiRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  emojiBubble: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emoji: { fontSize: 30 },
+  formPanel: { flex: 1, backgroundColor: brand.background },
+  formPanelContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 48 },
+
+  // phone
+  phoneRoot: { flex: 1, backgroundColor: brand.brown800 },
+  phoneTop: { alignItems: 'center', paddingTop: 20, paddingBottom: 28, gap: 10 },
+  phoneTitle: { color: brand.white },
+  sheet: {
+    flex: 1,
+    backgroundColor: brand.surface,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+  },
+  sheetContent: { flexGrow: 1, padding: 24, paddingBottom: 40 },
+
+  // shared
+  form: { width: '100%', maxWidth: 420 },
+  heading: { color: brand.brown800 },
+  sub: { fontSize: 15, color: brand.textSecondary, marginTop: 4, marginBottom: 20 },
+  gap: { marginTop: 14 },
+  warn: { backgroundColor: '#FFF4E0', borderColor: brand.warning, marginBottom: 6 },
+  warnTitle: { fontSize: 15, fontWeight: '800', color: brand.textPrimary },
+  warnText: { fontSize: 14, color: brand.textSecondary, marginTop: 4, lineHeight: 20 },
+  error: { color: brand.danger, fontSize: 14, marginTop: 14 },
+  signIn: { marginTop: 22 },
+  help: { fontSize: 14, color: brand.textMuted, textAlign: 'center', marginTop: 18 },
 });
